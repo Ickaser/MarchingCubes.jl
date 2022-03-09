@@ -91,6 +91,34 @@ struct MC{F,I}
         sizehint!(m.normals, nextpow(2, sz ÷ 2))
         m
     end
+    MC(
+        vol::Array{B,3},
+        I::Type{G} = Int;
+        x::AbstractVector{B} = B[],
+        y::AbstractVector{B} = B[],
+        z::AbstractVector{B} = B[],
+    ) where {B<:Boolean,G<:Integer} = begin
+        m = new{B,I}(
+            size(vol)...,
+            Ref(vol),
+            zeros(B, 8),
+            zeros(Int, 3),
+            zeros(B, 3),
+            zeros(B, 3),
+            zeros(I, (3, size(vol)...)),
+            Triangle[],
+            Vertex[],
+            Normal[],
+            Ref(x),
+            Ref(y),
+            Ref(z),
+        )
+        sz = size(vol) |> prod
+        sizehint!(m.triangles, nextpow(2, sz ÷ 6))
+        sizehint!(m.vertices, nextpow(2, sz ÷ 2))
+        sizehint!(m.normals, nextpow(2, sz ÷ 2))
+        m
+    end
 end
 
 """
