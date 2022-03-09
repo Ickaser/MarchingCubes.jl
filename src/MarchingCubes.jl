@@ -91,34 +91,35 @@ struct MC{F,I}
         sizehint!(m.normals, nextpow(2, sz ÷ 2))
         m
     end
-    MC(
-        vol::Array{B,3},
-        I::Type{G} = Int;
-        x::AbstractVector{B} = B[],
-        y::AbstractVector{B} = B[],
-        z::AbstractVector{B} = B[],
-    ) where {B<:Boolean,G<:Integer} = begin
-        m = new{B,I}(
-            size(vol)...,
-            Ref(vol),
-            zeros(B, 8),
-            zeros(Int, 3),
-            zeros(B, 3),
-            zeros(B, 3),
-            zeros(I, (3, size(vol)...)),
-            Triangle[],
-            Vertex[],
-            Normal[],
-            Ref(x),
-            Ref(y),
-            Ref(z),
-        )
-        sz = size(vol) |> prod
-        sizehint!(m.triangles, nextpow(2, sz ÷ 6))
-        sizehint!(m.vertices, nextpow(2, sz ÷ 2))
-        sizehint!(m.normals, nextpow(2, sz ÷ 2))
-        m
-    end
+    # Alternate version with BitArray, Bools instead of floats!
+    # MC(
+    #     vol::BitArray{3},
+    #     I::Type{G} = Int;
+    #     x::AbstractVector{F} = F[],
+    #     y::AbstractVector{F} = F[],
+    #     z::AbstractVector{F} = F[],
+    # ) where {F<:AbstractFloat,G<:Integer} = begin
+    #     m = new{F,I}(
+    #         size(vol)...,
+    #         Ref(vol),
+    #         zeros(Boolean, 8),
+    #         zeros(Int, 3),
+    #         zeros(F, 3),
+    #         zeros(F, 3),
+    #         zeros(I, (3, size(vol)...)),
+    #         Triangle[],
+    #         Vertex[],
+    #         Normal[],
+    #         Ref(x),
+    #         Ref(y),
+    #         Ref(z),
+    #     )
+    #     sz = size(vol) |> prod
+    #     sizehint!(m.triangles, nextpow(2, sz ÷ 6))
+    #     sizehint!(m.vertices, nextpow(2, sz ÷ 2))
+    #     sizehint!(m.normals, nextpow(2, sz ÷ 2))
+    #     m
+    # end
 end
 
 """
@@ -340,6 +341,12 @@ march(m::MC{F}, isovalue::Number = 0) where {F} = begin
     return
 end
 
+# """
+#     compute_intersection_points(vol{BitArray})
+
+# Marching algorithm for pre-thresholded data.
+# Added by Isaac Wheeler; largely copied from prior method.
+# """
 """
     compute_intersection_points(m::MC, vol, cb, iso)
 
@@ -347,8 +354,8 @@ end
 Computes almost all the vertices of the mesh by interpolation along the cubes edges.
 """
 compute_intersection_points(m::MC{F}, vol, cb, iso) where {F} = begin
-    @inbounds for k ∈ axes(vol, 3), j ∈ axes(vol, 2), i ∈ axes(vol, 1)
-        c0 = vol[i, j, k]
+    @inbounds for i ∈ axes(vol, 1), j ∈ axes(vol, 2), k ∈ axes(vol, 3)
+        c0 = vol[i, j, k] - iso
         c1 = i < m.nx ? vol[i+1, j, k] - iso : c0
         c2 = j < m.ny ? vol[i, j+1, k] - iso : c0
         c3 = k < m.nz ? vol[i, j, k+1] - iso : c0
